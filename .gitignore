@@ -1,0 +1,11 @@
+/*
+!/.gitignore
+!/config.m4
+!/geohash.c
+!/geohash_int.c
+!/geohash_int.h
+!/php_geohash.h
+!/test-geohash-php.php
+!/tests
+!/tests/*
+!/README.md
