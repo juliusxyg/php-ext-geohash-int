@@ -50,12 +50,13 @@ static geohash_t * geohash_instance(TSRMLS_D) {
   object_init_ex(instance, geohash_ce);
 
   zend_update_static_property(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_INSTANCE), instance TSRMLS_CC);
-  zval_ptr_dtor(&instance);//v0 mannual ref-1 for tmp val
-
+  zval_ptr_dtor(&instance);
   return instance;
 }
 /* }}} */
 
+/** {{{ static int steps_in_meters(double radius)
+*/
 static int steps_in_meters(double radius) {
   int step;
 
@@ -162,6 +163,7 @@ static int steps_in_meters(double radius) {
 
   return step;
 }
+/* }}} */
  
 void geohash_init_geohash(TSRMLS_D) {
   zend_class_entry ce;
@@ -197,8 +199,7 @@ PHP_METHOD(Geohash, getInstance) {
 
   if (Z_TYPE_P(instance) != IS_OBJECT || !instanceof_function(Z_OBJCE_P(instance), geohash_ce TSRMLS_CC)) {
     if ((instance = geohash_instance(TSRMLS_C))) {
-      RETURN_ZVAL(instance, 1, 0);//v0, destruct in geohash_instance
-      //RETURN_ZVAL(instance, 1, 1);//v1, destruct when return, the last 1 means call destructor
+      RETURN_ZVAL(instance, 1, 0);
     } else {
       RETURN_NULL();
     }
@@ -208,6 +209,8 @@ PHP_METHOD(Geohash, getInstance) {
 }
 /* }}} */
 
+/** {{{ proto public Geohash::encode(lat, long, step=26)
+*/
 PHP_METHOD(Geohash, encode) {
 	double latitude;
 	double longtitude;
@@ -232,7 +235,10 @@ PHP_METHOD(Geohash, encode) {
 
   RETURN_LONG(hash.bits);
 }
+/* }}} */
 
+/** {{{ proto public Geohash::fastEncode(lat, long, step=26)
+*/
 PHP_METHOD(Geohash, fastEncode) {
   double latitude;
   double longtitude;
@@ -257,7 +263,10 @@ PHP_METHOD(Geohash, fastEncode) {
 
   RETURN_LONG(fast_hash.bits);
 }
+/* }}} */
 
+/** {{{ proto public Geohash::decode(hash, step=26)
+*/
 PHP_METHOD(Geohash, decode) {
   long hashbit;
   long step = 26;
@@ -291,7 +300,10 @@ PHP_METHOD(Geohash, decode) {
   add_assoc_double(return_value, "lon_min", area.longitude.min);
   add_assoc_double(return_value, "lon_max", area.longitude.max);
 }
+/* }}} */
 
+/** {{{ proto public Geohash::fastDecode(hash, step=26)
+*/
 PHP_METHOD(Geohash, fastDecode) {
   long hashbit;
   long step = 26;
@@ -325,7 +337,10 @@ PHP_METHOD(Geohash, fastDecode) {
   add_assoc_double(return_value, "lon_min", area.longitude.min);
   add_assoc_double(return_value, "lon_max", area.longitude.max);
 }
+/* }}} */
 
+/** {{{ proto public Geohash::neighbors(hash, step=26)
+*/
 PHP_METHOD(Geohash, neighbors) {
   long hashbit;
   long step = 26;
@@ -356,7 +371,10 @@ PHP_METHOD(Geohash, neighbors) {
   add_assoc_long(return_value, "south_east", neighbors.south_east.bits);
   add_assoc_long(return_value, "south_west", neighbors.south_west.bits);
 }
+/* }}} */
 
+/** {{{ proto public Geohash::stepInRadius(meter)
+*/
 PHP_METHOD(Geohash, stepInRadius) {
   double radius;
   int step;
@@ -369,7 +387,10 @@ PHP_METHOD(Geohash, stepInRadius) {
 
   RETURN_LONG(step);
 }
+/* }}} */
 
+/** {{{ proto public Geohash::radiusSearch(lat, lon, meter, neighbor=false)
+*/
 PHP_METHOD(Geohash, radiusSearch) {
   double latitude;
   double longtitude;
@@ -427,3 +448,4 @@ PHP_METHOD(Geohash, radiusSearch) {
   add_assoc_long(return_value, "sw-min", neighbors.south_west.bits << (52-step*2));
   add_assoc_long(return_value, "sw-max", (neighbors.south_west.bits+1) << (52-step*2));
 }
+/* }}} */
