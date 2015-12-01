@@ -46,11 +46,10 @@ static zend_function_entry geohash_methods[] = {
 static geohash_t * geohash_instance(TSRMLS_D) {
   geohash_t *instance;
 
-  MAKE_STD_ZVAL(instance);
   object_init_ex(instance, geohash_ce);
 
   zend_update_static_property(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_INSTANCE), instance TSRMLS_CC);
-  zval_ptr_dtor(&instance);
+  zval_ptr_dtor(instance);
   return instance;
 }
 /* }}} */
@@ -183,7 +182,7 @@ void geohash_init_exception(TSRMLS_D) {
   zend_class_entry e;
  
   INIT_CLASS_ENTRY(e, "GeohashException", NULL);
-  geohash_exception_ce = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
+  geohash_exception_ce = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C) TSRMLS_CC);
 }
 
 /** {{{ proto protected Geohash::__construct(void)
@@ -221,10 +220,10 @@ PHP_METHOD(Geohash, encode) {
   }
 
   GeoHashRange lat_range, lon_range;
-  lat_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMAX), 1 TSRMLS_CC));
-  lat_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMIN), 1 TSRMLS_CC));
-  lon_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMAX), 1 TSRMLS_CC));
-  lon_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMIN), 1 TSRMLS_CC));
+  lat_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMAX), 1, NULL));
+  lat_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMIN), 1, NULL));
+  lon_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMAX), 1, NULL));
+  lon_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMIN), 1, NULL));
 
   GeoHashBits hash;
   if(geohash_encode(lat_range, lon_range, latitude, longtitude, step, &hash) == -1)
@@ -249,10 +248,10 @@ PHP_METHOD(Geohash, fastEncode) {
   }
 
   GeoHashRange lat_range, lon_range;
-  lat_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMAX), 1 TSRMLS_CC));
-  lat_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMIN), 1 TSRMLS_CC));
-  lon_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMAX), 1 TSRMLS_CC));
-  lon_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMIN), 1 TSRMLS_CC));
+  lat_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMAX), 1, NULL));
+  lat_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMIN), 1, NULL));
+  lon_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMAX), 1, NULL));
+  lon_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMIN), 1, NULL));
 
   GeoHashBits fast_hash;
   if(geohash_fast_encode(lat_range, lon_range, latitude, longtitude, step, &fast_hash) == -1)
@@ -280,10 +279,10 @@ PHP_METHOD(Geohash, decode) {
   hash.bits = hashbit;
 
   GeoHashRange lat_range, lon_range;
-  lat_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMAX), 1 TSRMLS_CC));
-  lat_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMIN), 1 TSRMLS_CC));
-  lon_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMAX), 1 TSRMLS_CC));
-  lon_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMIN), 1 TSRMLS_CC));
+  lat_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMAX), 1, NULL));
+  lat_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMIN), 1, NULL));
+  lon_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMAX), 1, NULL));
+  lon_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMIN), 1, NULL));
 
   GeoHashArea area;
   if(geohash_decode(lat_range, lon_range, hash, &area) == -1)
@@ -317,10 +316,10 @@ PHP_METHOD(Geohash, fastDecode) {
   hash.bits = hashbit;
 
   GeoHashRange lat_range, lon_range;
-  lat_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMAX), 1 TSRMLS_CC));
-  lat_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMIN), 1 TSRMLS_CC));
-  lon_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMAX), 1 TSRMLS_CC));
-  lon_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMIN), 1 TSRMLS_CC));
+  lat_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMAX), 1, NULL));
+  lat_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMIN), 1, NULL));
+  lon_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMAX), 1, NULL));
+  lon_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMIN), 1, NULL));
 
   GeoHashArea area;
   if(geohash_fast_decode(lat_range, lon_range, hash, &area) == -1)
@@ -405,10 +404,10 @@ PHP_METHOD(Geohash, radiusSearch) {
   step = steps_in_meters(radius);
 
   GeoHashRange lat_range, lon_range;
-  lat_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMAX), 1 TSRMLS_CC));
-  lat_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMIN), 1 TSRMLS_CC));
-  lon_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMAX), 1 TSRMLS_CC));
-  lon_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMIN), 1 TSRMLS_CC));
+  lat_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMAX), 1, NULL));
+  lat_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMIN), 1, NULL));
+  lon_range.max = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMAX), 1, NULL));
+  lon_range.min = Z_DVAL_P(zend_read_property(geohash_ce, getThis(), ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMIN), 1, NULL));
 
   GeoHashBits fast_hash;
   if(geohash_fast_encode(lat_range, lon_range, latitude, longtitude, step, &fast_hash) == -1) {
