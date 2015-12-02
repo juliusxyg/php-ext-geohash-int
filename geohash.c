@@ -23,6 +23,8 @@ ZEND_GET_MODULE(geohash);
 PHP_MINIT_FUNCTION(geohash) {
   geohash_init_geohash(TSRMLS_C);
   geohash_init_exception(TSRMLS_C);
+
+  return SUCCESS;
 }
  
 zend_class_entry *geohash_ce;
@@ -41,16 +43,33 @@ static zend_function_entry geohash_methods[] = {
   {NULL, NULL, NULL}
 };
 
+zend_class_entry* geohash_exception_base(int root) {
+#if can_handle_soft_dependency_on_SPL && defined(HAVE_SPL) && ((PHP_MAJOR_VERSION > 5) || (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 1))
+  if (!root) {
+    if (!spl_ce_RuntimeException) {
+      zend_class_entry **pce;
+
+      if (zend_hash_find(CG(class_table), "runtimeexception", sizeof("RuntimeException"), (void **) &pce) == SUCCESS) {
+        spl_ce_RuntimeException = *pce;
+        return *pce;
+      }
+    } else {
+      return spl_ce_RuntimeException;
+    }
+  }
+#endif
+
+  return zend_exception_get_default();
+}
+
 /** {{{ static geohash_t * geohash_instance(TSRMLS_D)
 */
-static geohash_t * geohash_instance(TSRMLS_D) {
-  geohash_t *instance;
+static geohash_t * geohash_instance(geohash_t *this_ptr) {
+  object_init_ex(this_ptr, geohash_ce);
 
-  object_init_ex(instance, geohash_ce);
-
-  zend_update_static_property(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_INSTANCE), instance TSRMLS_CC);
-  zval_ptr_dtor(instance);
-  return instance;
+  zend_update_static_property(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_INSTANCE), this_ptr);
+  zval_ptr_dtor(this_ptr);
+  return this_ptr;
 }
 /* }}} */
 
@@ -169,20 +188,20 @@ void geohash_init_geohash(TSRMLS_D) {
  
   INIT_CLASS_ENTRY(ce, "Geohash", geohash_methods);
 
-  geohash_ce = zend_register_internal_class(&ce TSRMLS_CC);
+  geohash_ce = zend_register_internal_class_ex(&ce, NULL);
 
-  zend_declare_property_null(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_INSTANCE), ZEND_ACC_PROTECTED|ZEND_ACC_STATIC TSRMLS_CC);
-  zend_declare_property_double(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMAX), 90, ZEND_ACC_PROTECTED TSRMLS_CC);
-  zend_declare_property_double(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMIN), -90, ZEND_ACC_PROTECTED TSRMLS_CC);
-  zend_declare_property_double(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMAX), 180, ZEND_ACC_PROTECTED TSRMLS_CC);
-  zend_declare_property_double(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMIN), -180, ZEND_ACC_PROTECTED TSRMLS_CC);
+  zend_declare_property_null(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_INSTANCE), ZEND_ACC_PROTECTED|ZEND_ACC_STATIC);
+  zend_declare_property_double(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMAX), 90, ZEND_ACC_PROTECTED);
+  zend_declare_property_double(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_LATMIN), -90, ZEND_ACC_PROTECTED);
+  zend_declare_property_double(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMAX), 180, ZEND_ACC_PROTECTED);
+  zend_declare_property_double(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_LONMIN), -180, ZEND_ACC_PROTECTED);
 }
 
 void geohash_init_exception(TSRMLS_D) {
-  zend_class_entry e;
+  zend_class_entry ce;
  
-  INIT_CLASS_ENTRY(e, "GeohashException", NULL);
-  geohash_exception_ce = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C) TSRMLS_CC);
+  INIT_CLASS_ENTRY(ce, "GeohashException", NULL);
+  geohash_exception_ce = zend_register_internal_class_ex(&ce, geohash_exception_base(0));
 }
 
 /** {{{ proto protected Geohash::__construct(void)
@@ -194,10 +213,13 @@ PHP_METHOD(Geohash, __construct) {
 /** {{{ proto public Geohash::getInstance(void)
 */
 PHP_METHOD(Geohash, getInstance) {
-  geohash_t *instance = zend_read_static_property(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_INSTANCE), 1 TSRMLS_CC);
+  geohash_t *instance;
 
-  if (Z_TYPE_P(instance) != IS_OBJECT || !instanceof_function(Z_OBJCE_P(instance), geohash_ce TSRMLS_CC)) {
-    if ((instance = geohash_instance(TSRMLS_C))) {
+  instance = zend_read_static_property(geohash_ce, ZEND_STRL(GEOHASH_PROPERTY_NAME_INSTANCE), 1);
+
+  if (Z_TYPE_P(instance) != IS_OBJECT || !instanceof_function(Z_OBJCE_P(instance), geohash_ce)) {
+    zval rv;
+    if ((instance = geohash_instance(&rv))) {
       RETURN_ZVAL(instance, 1, 0);
     } else {
       RETURN_NULL();
@@ -215,7 +237,7 @@ PHP_METHOD(Geohash, encode) {
 	double longtitude;
   long step = 26;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "dd|l", &latitude, &longtitude, &step) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "dd|l", &latitude, &longtitude, &step) == FAILURE) {
     return;
   }
 
@@ -228,7 +250,7 @@ PHP_METHOD(Geohash, encode) {
   GeoHashBits hash;
   if(geohash_encode(lat_range, lon_range, latitude, longtitude, step, &hash) == -1)
   {
-  	zend_throw_exception(geohash_exception_ce, "expect `encode` failed", 500 TSRMLS_CC);
+  	zend_throw_exception(geohash_exception_ce, "expect `encode` failed", 500);
     return;
   }
 
@@ -243,7 +265,7 @@ PHP_METHOD(Geohash, fastEncode) {
   double longtitude;
   long step = 26;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "dd|l", &latitude, &longtitude, &step) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "dd|l", &latitude, &longtitude, &step) == FAILURE) {
     return;
   }
 
@@ -256,7 +278,7 @@ PHP_METHOD(Geohash, fastEncode) {
   GeoHashBits fast_hash;
   if(geohash_fast_encode(lat_range, lon_range, latitude, longtitude, step, &fast_hash) == -1)
   {
-    zend_throw_exception(geohash_exception_ce, "expect `fast encode` failed", 500 TSRMLS_CC);
+    zend_throw_exception(geohash_exception_ce, "expect `fast encode` failed", 500);
     return;
   }
 
@@ -270,7 +292,7 @@ PHP_METHOD(Geohash, decode) {
   long hashbit;
   long step = 26;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|l", &hashbit, &step) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "l|l", &hashbit, &step) == FAILURE) {
     return;
   }
 
@@ -287,7 +309,7 @@ PHP_METHOD(Geohash, decode) {
   GeoHashArea area;
   if(geohash_decode(lat_range, lon_range, hash, &area) == -1)
   {
-    zend_throw_exception(geohash_exception_ce, "expect `decode` failed", 500 TSRMLS_CC);
+    zend_throw_exception(geohash_exception_ce, "expect `decode` failed", 500);
     return;
   }
 
@@ -307,7 +329,7 @@ PHP_METHOD(Geohash, fastDecode) {
   long hashbit;
   long step = 26;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|l", &hashbit, &step) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "l|l", &hashbit, &step) == FAILURE) {
     return;
   }
 
@@ -324,7 +346,7 @@ PHP_METHOD(Geohash, fastDecode) {
   GeoHashArea area;
   if(geohash_fast_decode(lat_range, lon_range, hash, &area) == -1)
   {
-    zend_throw_exception(geohash_exception_ce, "expect `fastDecode` failed", 500 TSRMLS_CC);
+    zend_throw_exception(geohash_exception_ce, "expect `fastDecode` failed", 500);
     return;
   }
 
@@ -344,7 +366,7 @@ PHP_METHOD(Geohash, neighbors) {
   long hashbit;
   long step = 26;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|l", &hashbit, &step) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "l|l", &hashbit, &step) == FAILURE) {
     return;
   }
 
@@ -355,7 +377,7 @@ PHP_METHOD(Geohash, neighbors) {
   GeoHashNeighbors neighbors;
   if(geohash_get_neighbors(hash, &neighbors) == -1)
   {
-    zend_throw_exception(geohash_exception_ce, "expect `neighbors` failed", 500 TSRMLS_CC);
+    zend_throw_exception(geohash_exception_ce, "expect `neighbors` failed", 500);
     return;
   }
 
@@ -378,7 +400,7 @@ PHP_METHOD(Geohash, stepInRadius) {
   double radius;
   int step;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &radius) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "d", &radius) == FAILURE) {
     return;
   }
 
@@ -397,7 +419,7 @@ PHP_METHOD(Geohash, radiusSearch) {
   zend_bool neighbor = 0;
   int step;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ddd|b", &latitude, &longtitude, &radius, &neighbor) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "ddd|b", &latitude, &longtitude, &radius, &neighbor) == FAILURE) {
     return;
   }
 
@@ -411,7 +433,7 @@ PHP_METHOD(Geohash, radiusSearch) {
 
   GeoHashBits fast_hash;
   if(geohash_fast_encode(lat_range, lon_range, latitude, longtitude, step, &fast_hash) == -1) {
-    zend_throw_exception(geohash_exception_ce, "expect `fast encode` failed", 500 TSRMLS_CC);
+    zend_throw_exception(geohash_exception_ce, "expect `fast encode` failed", 500);
     return;
   }
 
@@ -426,7 +448,7 @@ PHP_METHOD(Geohash, radiusSearch) {
   GeoHashNeighbors neighbors;
   if(geohash_get_neighbors(fast_hash, &neighbors) == -1)
   {
-    zend_throw_exception(geohash_exception_ce, "expect `neighbors` failed", 500 TSRMLS_CC);
+    zend_throw_exception(geohash_exception_ce, "expect `neighbors` failed", 500);
     return;
   }
 
