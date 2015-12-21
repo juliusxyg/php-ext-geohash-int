@@ -29,17 +29,45 @@ PHP_MINIT_FUNCTION(geohash) {
  
 zend_class_entry *geohash_ce;
 zend_class_entry *geohash_exception_ce;
+
+/* {{{ ARG_INFO
+ */
+ZEND_BEGIN_ARG_INFO_EX(geohash_void_arginfo, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(geohash_encode_arginfo, 0, 0, 2)
+  ZEND_ARG_INFO(0, lat)
+  ZEND_ARG_INFO(0, long)
+  ZEND_ARG_INFO(0, step)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(geohash_decode_arginfo, 0, 0, 1)
+  ZEND_ARG_INFO(0, bit)
+  ZEND_ARG_INFO(0, step)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(geohash_radius_arginfo, 0, 0, 1)
+  ZEND_ARG_INFO(0, radius)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(geohash_radius_search_arginfo, 0, 0, 3)
+  ZEND_ARG_INFO(0, lat)
+  ZEND_ARG_INFO(0, lon)
+  ZEND_ARG_INFO(0, radius)
+  ZEND_ARG_INFO(0, neighbor)
+ZEND_END_ARG_INFO()
+/* }}} */
  
 static zend_function_entry geohash_methods[] = {
   PHP_ME(Geohash, __construct, NULL, ZEND_ACC_CTOR|ZEND_ACC_PROTECTED)
-  PHP_ME(Geohash, getInstance, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	PHP_ME(Geohash, encode, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Geohash, fastEncode, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Geohash, decode, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Geohash, fastDecode, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Geohash, neighbors, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Geohash, stepInRadius, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Geohash, radiusSearch, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(Geohash, getInstance, geohash_void_arginfo, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	PHP_ME(Geohash, encode, geohash_encode_arginfo, ZEND_ACC_PUBLIC)
+  PHP_ME(Geohash, fastEncode, geohash_encode_arginfo, ZEND_ACC_PUBLIC)
+  PHP_ME(Geohash, decode, geohash_decode_arginfo, ZEND_ACC_PUBLIC)
+  PHP_ME(Geohash, fastDecode, geohash_decode_arginfo, ZEND_ACC_PUBLIC)
+  PHP_ME(Geohash, neighbors, geohash_decode_arginfo, ZEND_ACC_PUBLIC)
+  PHP_ME(Geohash, stepInRadius, geohash_radius_arginfo, ZEND_ACC_PUBLIC)
+  PHP_ME(Geohash, radiusSearch, geohash_radius_search_arginfo, ZEND_ACC_PUBLIC)
   {NULL, NULL, NULL}
 };
 
@@ -62,7 +90,7 @@ zend_class_entry* geohash_exception_base(int root) {
   return zend_exception_get_default();
 }
 
-/** {{{ static geohash_t * geohash_instance(TSRMLS_D)
+/** {{{ static geohash_t * geohash_instance(geohash_t *this_ptr)
 */
 static geohash_t * geohash_instance(geohash_t *this_ptr) {
   object_init_ex(this_ptr, geohash_ce);

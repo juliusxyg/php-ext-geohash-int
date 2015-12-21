@@ -1,5 +1,7 @@
 <?php
 // program mark - basic test
+$start_m = memory_get_usage();
+
 $hashbit_1 = Geohash::getInstance()->encode(52.53261, 13.3777, 24);
 echo "Geohash::encode(52.53261, 13.3777, 24) : ".($hashbit_1)."\n";
 
@@ -38,4 +40,6 @@ var_dump($ret);
 $hashbit_2 = Geohash::getInstance()->encode(52.53261, 13.3777);
 echo "Geohash::encode(52.53261, 13.3777) : ".($hashbit_2)."\n";
 
+$end_m = memory_get_usage();
+echo ($end_m-$start_m) . "\n";
 
